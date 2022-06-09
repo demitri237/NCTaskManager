@@ -61,7 +61,11 @@ public class ArrayTaskList {
     public int size(){ return size;}
 
 
-    public Task getTask(int index){ return taskList[index];  }
+    public Task getTask(int index){
+        if (index<0 || index>=size){
+            throw new IndexOutOfBoundsException("Your index out of range");
+        }
+        return taskList[index];  }
 
     public ArrayTaskList incoming(int from, int to){
         ArrayTaskList result = new ArrayTaskList();

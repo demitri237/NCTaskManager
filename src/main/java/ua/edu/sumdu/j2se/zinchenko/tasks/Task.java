@@ -28,6 +28,9 @@ public class Task {
         this.time = time;
         repeated=false;
         active=false;
+        if (time<0){
+            throw new IllegalArgumentException("Time cannot be negative");
+        }
     }
 
     /**
@@ -47,6 +50,9 @@ public class Task {
         this.interval = interval;
         this.repeated=true;
         this.active=false;
+        if (start>end || interval > end || interval>(end-start)  ){
+            throw new IllegalArgumentException("not correct condition");
+        }
     }
 
     public String getTitle() {
