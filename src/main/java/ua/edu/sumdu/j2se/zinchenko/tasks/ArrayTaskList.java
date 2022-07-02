@@ -1,87 +1,99 @@
 package ua.edu.sumdu.j2se.zinchenko.tasks;
 
 
-
 import java.util.Arrays;
+import java.util.Iterator;
+import java.util.stream.Stream;
 
-public class ArrayTaskList {
+public class ArrayTaskList extends AbstractTaskList implements Iterable<Task>, Cloneable {
 
-    private int size;
-    int capacity;
-    private Task[] taskList;
+    private int size = 0;
 
-    public ArrayTaskList() {
-            capacity=10;
-            size=0;
-        taskList = new Task[capacity];
-    }
-    public ArrayTaskList(int capacity) {
-        this.capacity =capacity;
-        size=0;
-        taskList = new Task[capacity];
-    }
+    Task[] tasks = new Task[10];
 
-    public void add(Task task){
-        if(task != null){
-            if(size==capacity){
-                grow();
-            }
-            taskList[size] = task;
+    public void add(Task task) {
+        if (tasks[tasks.length - 1] != null) {
+            tasks = Arrays.copyOf(tasks, tasks.length + size);
+        } else {
             size++;
+            for (int i = 0; i < size; i++) {
+                if (tasks[i] == null) {
+                    tasks[i] = task;
+                }
+            }
         }
     }
 
-    private void grow(){
-        capacity = (int)(capacity*1.5);
-        Task[] newTaskList = new Task[capacity];
-        for (int i = 0;i<taskList.length;i++){
-            newTaskList[i]=taskList[i];
-        }
-        taskList=newTaskList;
-    }
+    public boolean remove(Task task) {
+        for (int i = 0; i < tasks.length; i++) {
+            if (tasks[i].equals(task)) {
+                System.arraycopy(tasks, i + 1, tasks, i, tasks.length - 1 - i);
+                size--;
+                return true;
 
-
-
-    public boolean remove(Task task){
-        if(task != null){
-            for (int i = 0; i<size;i++){
-                if (getTask(i).equals(task)){
-                    System.arraycopy(taskList,(i+1),taskList,i,size-i-1);
-                    taskList[size-1]= null;
-                    size--;
-                    return true;
-                    } //break;
             }
         }
         return false;
-   }
-
-
-
-    public int size(){ return size;}
-
-
-    public Task getTask(int index){ return taskList[index];  }
-
-    public ArrayTaskList incoming(int from, int to){
-        ArrayTaskList result = new ArrayTaskList();
-        for(int i = 0; i< size; i++){
-
-            if(taskList[i].nextTimeAfter(from) >from && taskList[i].nextTimeAfter(from) <to  ){
-                result.add(taskList[i]);
-            }
-
-        }
-        return result;
     }
 
+    public int size() {
+        return size;
+    }
+
+    public Task getTask(int index) {
+        if (index > tasks.length) {
+            throw new IndexOutOfBoundsException("Index greater than the length of the array");
+        }
+        return tasks[index];
+    }
+
+    @Override
+    public ListTypes.types getType() {
+        return ListTypes.types.ARRAY;
+    }
+
+    @Override
+    public Stream<Task> getStream() {
+        return Stream.of(tasks);
+    }
+
+    @Override
+    public Iterator<Task> iterator() {
+        Iterator<Task> ArrayIterator = new Iterator<Task>() {
+            private int current = 0;
+
+            @Override
+            public boolean hasNext() {
+                return getTask(current) != null;
+            }
+
+            @Override
+            public Task next() {
+                return getTask(current++);
+            }
+
+            @Override
+            public void remove() throws IllegalStateException {
+                ArrayTaskList arrayTaskList = new ArrayTaskList();
+                if (current == 0) {
+                    throw new IllegalStateException();
+                } else {
+                    arrayTaskList.tasks = tasks;
+                    Task tasksVoid = getTask(--current);
+                    arrayTaskList.remove(tasksVoid);
+                    tasks = Arrays.copyOf(tasks, tasks.length - 1);
+                }
+            }
+        };
+        return ArrayIterator;
+    }
 
     @Override
     public String toString() {
         return "ArrayTaskList{" +
                 "size=" + size +
-                ", capacity=" + capacity +
-                ", taskList=" + Arrays.toString(taskList) +
+                ", tasks=" + Arrays.toString(tasks) +
                 '}';
     }
 }
+
