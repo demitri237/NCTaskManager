@@ -1,116 +1,155 @@
 package ua.edu.sumdu.j2se.zinchenko.tasks;
 
-public class LinkedTaskList {
+import java.util.Iterator;
+import java.util.NoSuchElementException;
+import java.util.stream.Stream;
 
+public class LinkedTaskList extends AbstractTaskList implements Iterable<Task>, Cloneable {
 
+    static class Node {
+        Task task;
+        Node next;
 
-    private static class Node {
+        public Node(Task task) {
+            this.task = task;
+        }
 
-        private final Task data;
-        private Node next;
+        public Task getTaskData() {
+            return this.task;
+        }
 
-        public Node(Task data) {
-            this.data = data;
-            next = null;
+        public Node getNext() {
+            return next;
+        }
+
+        public void setNext(Node next) {
+            this.next = next;
         }
     }
 
-    private Node head;
+    private Node first;
+    private Node last;
     private int size;
-    public int size(){ return size;}
 
-
-    /**
-     * return task from specified position
-     * @param index-tast to return
-     * */
-    public Task getTask(int index){
-        if (index<0 || index>=size){
-            throw new IndexOutOfBoundsException("Your index out of range");
-        }
-
-        Node  node = head;
-        int tmp = 0;
-
-        while (tmp != index){
-            node=node.next;
-            tmp++;
-        }
-
-        return node.data;
-    }
-
-    public void add(Task task){
-        if (task==null){
-            throw new IllegalArgumentException("Task should not be null");
-        }
-
-        Node newNode = new Node(task);
-        //Node currentNode = head;
-
-        if (head!=null){
-            newNode.next=head;
-        }
-        head= newNode;
-        size++;
-    }
-
-    public boolean remove(Task task){
-        if(head==null){
-            return false;
-        } else if (head.data.equals(task)) {
-            head=head.next;
-            size--;
-            return true;
-        } else{
-            Node currentNode = head;
-            while(currentNode.next!=null){
-                if(currentNode.next.data.equals(task)){
-                    currentNode.next=currentNode.next.next;
-                    size--;
-                    return  true;
-                }
-                currentNode=currentNode.next;
+    public void add(Task task) {
+        if (task != null) {
+            Node newNode = new Node(task);
+            if (first == null) {
+                first = last = newNode;
+            } else {
+                last.next = newNode;
+                last = newNode;
             }
+            size++;
+        } else {
+            throw new IllegalArgumentException("Tasks cant be null!");
+        }
+    }
+
+    public Task getTask(int index) {
+        if (index < 0 || index >= size()) {
+            throw new IndexOutOfBoundsException();
+        }
+        if (index < size() - 1) {
+            Node current = first;
+            for (int i = 0; i < index; i++) {
+                current = current.next;
+            }
+            return current.getTaskData();
+        }
+        return last.getTaskData();
+    }
+
+    public boolean remove(Task task) {
+        Node curr = first;
+        Node prev = null;
+        for (int i = 0; i < size; i++) {
+            if (getTask(i).equals(task)) {
+                if (prev != null) {
+                    prev.next = curr.next;
+                    if (curr.next == null)
+                        last = prev;
+                } else {
+                    first = first.next;
+                }
+                size--;
+                return true;
+            }
+            prev = curr;
+            curr = curr.next;
         }
         return false;
     }
 
-
-
-    public void print(){
-        Node currentNode =head;
-
-        if(head!=null){
-            System.out.println(head.data);
-        }
-        while (currentNode.next!=null){
-            currentNode=currentNode.next;
-            System.out.println(currentNode.data);
-        }
+    public int size() {
+        return size;
     }
 
-    public LinkedTaskList incoming(int from, int to){
-        LinkedTaskList taskList = new LinkedTaskList();
-        if (size==0){
-            return taskList;
+    @Override
+    public ListTypes.types getType() {
+        return ListTypes.types.LINKED;
+    }
+
+    @Override
+    public Stream<Task> getStream() {
+        Task[] tasks = new Task[this.size()];
+        for (int i = 0; i < this.size(); i++) {
+            tasks[i] = this.getTask(i);
         }
-        Node node= head;
-        while( node != null){
-            int nextTime = node.data.nextTimeAfter(from);
-            if( from < nextTime && nextTime <= to){
-                taskList.add(node.data);
+        return Stream.of(tasks);
+    }
+
+    @Override
+    public Iterator<Task> iterator() {
+        Iterator<Task> LinkedIterator = new Iterator<Task>() {
+            Node curr = first;
+            Node prev = null;
+            Node beforePrev = null;
+            boolean removeCalled = false;
+
+            @Override
+            public boolean hasNext() {
+                return curr != null;
             }
-            node=node.next;
-        }
-        return taskList;
+
+            @Override
+            public Task next() {
+                if (curr == null) {
+                    throw new NoSuchElementException();
+                }
+                Task tas = curr.getTaskData();
+                beforePrev = prev;
+                prev = curr;
+                curr = curr.getNext();
+                removeCalled = false;
+                return tas;
+            }
+
+            @Override
+            public void remove() {
+                if (prev == null || removeCalled) {
+                    throw new IllegalStateException();
+                }
+                if (beforePrev == null) {
+                    first = curr;
+                } else {
+                    beforePrev.setNext(curr);
+                    prev = beforePrev;
+                }
+                size--;
+                removeCalled = true;
+            }
+        };
+        return LinkedIterator;
     }
 
     @Override
     public String toString() {
         return "LinkedTaskList{" +
-                "head=" + head +
+                "first=" + first +
+                ", last=" + last +
                 ", size=" + size +
                 '}';
     }
 }
+
